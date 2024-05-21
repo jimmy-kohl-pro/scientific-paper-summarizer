@@ -1,13 +1,13 @@
 'use client';
 
 import { useState } from 'react';
-import axios from 'axios';
 import { useRouter } from 'next/navigation';
+import axios from 'axios';
 
-export interface PaperItem {
-    id: number;
+interface PaperItem {
     title: string;
-    summary: string;
+    abstract: string;
+    fullText: string;
 }
 
 const SearchPapers = () => {
@@ -22,15 +22,15 @@ const SearchPapers = () => {
       const response = await axios.get('/api/fetchPapers', {
         params: { query, filter, sort }
       });
-      setPapers(response.data);
+      setPapers(response.data.records);
     } catch (error) {
       console.error('Error fetching papers:', error);
     }
   };
 
-const handleSummarize = (paper: PaperItem) => {
-    router.push(`/summarize/${paper.id}`);
-};
+  const handleSummarize = (paperId: string) => {
+    router.push(`/summarize/${paperId}`);
+  };
 
   return (
     <div className="min-h-screen bg-gray-100 p-4">
@@ -79,12 +79,12 @@ const handleSummarize = (paper: PaperItem) => {
         {papers.map((paper, index) => (
           <div key={index} className="bg-white p-4 mb-4 rounded-lg shadow-md">
             <h2 className="text-xl font-bold">{paper.title}</h2>
-            <p>{paper.summary}</p>
+            <p>{paper.abstract}</p>
             <button
-              onClick={() => handleSummarize(paper)} // Assuming paper.text contains the full text of the paper
+              onClick={() => handleSummarize("test")} // Assuming paper.fullText contains the full text of the paper
               className="bg-green-500 text-white p-2 mt-2 rounded"
             >
-                Summarize & Q&A
+              Summarize & Q&A
             </button>
           </div>
         ))}

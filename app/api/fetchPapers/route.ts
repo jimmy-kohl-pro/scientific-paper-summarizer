@@ -7,21 +7,8 @@ export async function GET(request: Request) {
     const filter = searchParams.get('filter') || '';
     const sort = searchParams.get('sort') || '';
 
-    return NextResponse.json([
-        {
-            title: 'Paper 1',
-            summary: 'This is a summary of paper 1',
-        },
-        {
-            title: 'Paper 2',
-            summary: 'This is a summary of paper 2',
-        },
-        {
-            title: 'Paper 3',
-            summary: 'This is a summary of paper 3',
-        }
-    ]);
-    const url = `https://api.example.com/search?query=${query}&filter=${filter}&sort=${sort}`;
+    const apiKey = process.env.SPRINGER_NATURE_API_KEY;
+    const url = `https://api.springernature.com/meta/v2/json?q=${query}&filter=${filter}&sort=${sort}&api_key=${apiKey}`;
 
     try {
         const response = await axios.get(url);
