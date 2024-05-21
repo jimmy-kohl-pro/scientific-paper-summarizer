@@ -6,7 +6,7 @@ export async function POST(request: Request) {
 
   try {
     const summaryResponse = await client.Pipeline.triggerUserPipelineAction({
-        pipelineName: 'summarizationPipeline',
+        pipelineName: 'summarization',
         payload: {
             inputs: [
                 {
@@ -18,7 +18,7 @@ export async function POST(request: Request) {
     });
 
     const qnaResponse = await client.Pipeline.triggerUserPipelineAction({
-      pipelineName: 'qnaPipeline',
+      pipelineName: 'qna',
       payload: {
           inputs: [
               {
