@@ -16,7 +16,7 @@ interface QnA {
 }
 
 const Summarize = ({ paperId }: { paperId: string }) => {
-    const paperText = "Example scientific paper text"; // Replace with actual data
+    const paperText = "This study examines the effects of climate change on marine biodiversity over the past 50 years. Our findings indicate significant shifts in species distribution and ecosystem dynamics, driven by changing ocean temperatures and acidification. Climate change is one of the most pressing environmental issues of our time. It affects various natural systems, including marine ecosystems. This paper explores how rising temperatures and ocean acidification have altered marine biodiversity, focusing on specific case studies and global trends. Our primary research question is: How has marine biodiversity responded to climate change over the past half-century? We employed a combination of longitudinal data analysis, field experiments, and computer modeling to study changes in marine biodiversity. Data were collected from multiple sources, including historical records, satellite imagery, and in situ observations. Statistical methods were used to identify significant trends and correlations. Our findings indicate several significant impacts of climate change on marine biodiversity: (1) Species Distribution Shifts: Many marine species have migrated towards the poles in response to rising ocean temperatures, resulting in altered community structures in various marine ecosystems. (2) Ecosystem Dynamics Changes: Changes in the abundance of keystone species have disrupted predator-prey relationships, leading to new ecological equilibria. (3) Acidification Effects: Increased ocean acidification has adversely affected calcifying organisms, such as corals and shellfish, leading to declines in their populations. Our results highlight the profound impact of climate change on marine biodiversity. The poleward migration of species and changes in ecosystem dynamics pose challenges for conservation and management efforts. Future research should focus on developing adaptive strategies to mitigate these impacts. Limitations of our study include potential biases in historical data and the need for more comprehensive global monitoring systems. Climate change has significantly affected marine biodiversity, with far-reaching consequences for ecosystem health and human livelihoods. Immediate action is required to address these challenges and protect marine life."; // Replace with actual data
     const [profile, setProfile] = useState<string>('casual');
     const [summary, setSummary] = useState<string>('');
     const [qna, setQna] = useState<QnA[]>([]);
@@ -64,9 +64,16 @@ const Summarize = ({ paperId }: { paperId: string }) => {
 
     const summarizePaper = async () => {
         try {
-            const response = await axios.post('/api/summarizePaper', { paperText, profile });
+            const response = await axios.post('/api/summarizePaper', {
+                paper: {
+                    title: 'The Impact of Climate Change on Marine Biodiversity',
+                    text: paperText,
+                },
+                profile
+            });
+            console.log('response:', response.data);
             setSummary(response.data.summary);
-            setQna(response.data.qna);
+            // setQna(response.data.qna);
         } catch (error) {
             console.error('Error summarizing paper:', error);
         }
