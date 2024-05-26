@@ -44,8 +44,6 @@ interface PaperItem {
 
 const SearchPapers = () => {
     const [query, setQuery] = useState('');
-    const [filter, setFilter] = useState('');
-    const [sort, setSort] = useState('');
     const [papers, setPapers] = useState<PaperItem[]>([]);
     const router = useRouter();
 
@@ -59,7 +57,7 @@ const SearchPapers = () => {
         try {
             setLoading(true);
             const response = await axios.get('/api/fetchPapers', {
-                params: { query, filter, sort }
+                params: { query }
             });
             setPapers(response.data);
         } catch (error) {
@@ -67,11 +65,7 @@ const SearchPapers = () => {
         } finally {
             setLoading(false);
         }
-    };
-
-    useEffect(() => {
-        searchPapers();
-    }, []);
+    }; 
 
     return (
         <div className="min-h-screen bg-gray-100 p-4">
@@ -85,28 +79,6 @@ const SearchPapers = () => {
                         placeholder="Search..."
                         className="w-full p-2 border rounded"
                     />
-                </div>
-                <div className="flex space-x-4 mb-4">
-                    <select
-                        value={filter}
-                        onChange={(e) => setFilter(e.target.value)}
-                        className="w-1/2 p-2 border rounded"
-                    >
-                        <option value="">Category</option>
-                        <option value="cs">Computer Science</option>
-                        <option value="bio">Biology</option>
-                        {/* Add more categories */}
-                    </select>
-                    <select
-                        value={sort}
-                        onChange={(e) => setSort(e.target.value)}
-                        className="w-1/2 p-2 border rounded"
-                    >
-                        <option value="">Sort By</option>
-                        <option value="newest">Newest</option>
-                        <option value="trending">Trending</option>
-                        {/* Add more sorting options */}
-                    </select>
                 </div>
                 <button
                     onClick={searchPapers}
