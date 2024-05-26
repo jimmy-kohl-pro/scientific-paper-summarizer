@@ -1,10 +1,12 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import axios from 'axios';
-import { FaUserAstronaut, FaLaptopCode, FaUser, FaPlus, FaPaperPlane, FaChild } from 'react-icons/fa';
+import { FaUserAstronaut, FaLaptopCode, FaUser, FaPlus, FaPaperPlane, FaChild, FaArrowLeft, FaFileAlt, FaNewspaper } from 'react-icons/fa';
 import MdxRenderer from './MdxRenderer';
 import { IconType } from 'react-icons';
+import { useQuery } from '@tanstack/react-query';
+import Link from 'next/link';
 
 interface Profile {
     key: string;
@@ -47,26 +49,38 @@ const defaultProfiles: Profile[] = [
 
 const Summarize = ({ paperId }: { paperId: string }) => {
     const [profile, setProfile] = useState<string>('casual');
-    const [summary, setSummary] = useState<string>('');
+    // const [summary, setSummary] = useState<string>('');
     const [qna, setQna] = useState<QnA[]>([]);
     const [question, setQuestion] = useState<string>('');
     const [answer, setAnswer] = useState<string>('');
     const [profiles, setProfiles] = useState<Profile[]>(defaultProfiles);
-    const [newProfileName, setNewProfileName] = useState<string>('');
-    const [newProfileLevel, setNewProfileLevel] = useState<string>('');
-    const [isModalOpen, setIsModalOpen] = useState<boolean>(false);
+    const [chatWidth, setChatWidth] = useState(560);
+    const chatRef = useRef<HTMLDivElement>(null);
+    const resizerRef = useRef<HTMLDivElement>(null);
+
+    const { data: paperMetadata, isLoading: isLoadingPaperMetadata, isError: isErrorPaperMetadata } = useQuery(
+        {
+            queryFn: () => axios.get(`/api/getPaperMetadata?paperId=${encodeURIComponent(paperId)}`),
+            queryKey: ['getPaperMetadata', paperId],
+            enabled: !!paperId,
+        }
+    );
+
+    const { data: summary, isLoading: isLoadingSummary, isError: isErrorSummary } = useQuery<string>(
+        {
+            queryFn: async () => (await axios.post('/api/summarizePaper', {
+                paperId,
+                profile: profiles.find((p) => p.key === profile)?.text
+            }))?.data?.summary,
+            queryKey: ['summarizePaper', paperId, profile],
+            enabled: !!profile,
+        }
+    );
 
 
     useEffect(() => {
-        // const savedProfiles = JSON.parse(localStorage.getItem('profiles') || '[]');
-        // setProfiles([...defaultProfiles, ...savedProfiles]);
-        // fetchProfiles();
         fetchPaper();
     }, []);
-
-    useEffect(() => {
-        summarizePaper();
-    }, [profile]);
 
 
     const fetchPaper = async () => {
@@ -78,47 +92,37 @@ const Summarize = ({ paperId }: { paperId: string }) => {
             console.error('Error fetching paper:', error);
         }
     }
+
     
+    const handleMouseDown = (e: React.MouseEvent) => {
+        document.addEventListener('mousemove', handleMouseMove);
+        document.addEventListener('mouseup', handleMouseUp);
+    };
 
-    // const createProfile = () => {
-    //     const newProfile = { id: Date.now(), name: newProfileName, level: newProfileLevel };
-    //     const updatedProfiles = [...profiles, newProfile];
-    //     setProfiles(updatedProfiles);
-    //     localStorage.setItem('profiles', JSON.stringify(updatedProfiles));
-    //     setNewProfileName('');
-    //     setNewProfileLevel('');
-    //     setIsModalOpen(false);
-    // };
-
-    const summarizePaper = async () => {
-        try {
-            const response = await axios.post('/api/summarizePaper', {
-                paperId,
-                profile: profiles.find((p) => p.key === profile)?.text
-            });
-            console.log('response:', response.data);
-            setSummary(response.data.summary);
-            // setQna(response.data.qna);
-        } catch (error) {
-            console.error('Error summarizing paper:', error);
+    const handleMouseMove = (e: MouseEvent) => {
+        const newWidth = window.innerWidth - e.clientX;
+        if (newWidth > 200) {
+            setChatWidth(newWidth);
         }
     };
 
-    // const askQuestion = async () => {
-    //     try {
-    //         const response = await axios.post('/api/askQuestion', { paperText, question });
-    //         setAnswer(response.data.answer);
-    //     } catch (error) {
-    //         console.error('Error asking question:', error);
-    //     }
-    // };
+    const handleMouseUp = () => {
+        document.removeEventListener('mousemove', handleMouseMove);
+        document.removeEventListener('mouseup', handleMouseUp);
+    };
 
     return (
-        <div className="min-h-screen max-h-screen flex">
-            <div className="w-1/2 p-4 bg-gray-200">
+        <div className="min-h-screen max-h-screen flex flex-col md:flex-row">
+            <div className="flex-1 p-4 bg-gray-200 flex flex-col">
+                <Link
+                    className="bg-blue-500 text-white p-2 rounded w-16 flex items-center justify-center"
+                    href="/"
+                >
+                    <FaArrowLeft />
+                </Link>
                 <div className="w-full flex flex-row gap-4 mt-4">
-                    <div className="w-1/2">
-                        <h2 className="text-xl font-bold mb-4">Select Profile</h2>
+                    <div className="w-1/2 flex flex-col gap-4">
+                        <h2 className="text-xl font-bold mb-1">Select Profile</h2>
                         <div className="flex flex-col items-start space-y-2">
                             {profiles.map((p) => (
                                 <button
@@ -139,24 +143,40 @@ const Summarize = ({ paperId }: { paperId: string }) => {
                             </button> */}
                         </div>
                     </div>
-                    <div className="w-1/2">
-                        <h2 className="text-xl font-bold mb-4">Informations</h2>
+                    <div className="w-1/2 flex flex-col gap-4">
+                        <h2 className="text-xl font-bold mb-1">Informations</h2>
                         <div className="bg-white p-4 rounded shadow-md">
                             <h3 className="text-lg font-bold">Paper ID</h3>
                             <p>{paperId}</p>
                             <h3 className="text-lg font-bold mt-4">Profile</h3>
                             <p>{profiles.find((p) => p.key === profile)?.label}</p>
                         </div>
+                        <button
+                            className="bg-blue-500 text-white p-2 rounded w-full flex items-center justify-center gap-2"
+                            onClick={() => {
+                                // Generate article logic here
+                            }}
+                        >
+                            <span>Generate Article</span><FaNewspaper />
+                        </button>
                     </div>
                 </div>
                 <h2 className="text-xl font-bold mt-8 mb-4">Summary</h2>
                 <div className="bg-white p-4 rounded shadow-md overflow-y-auto">
-                    {summary ? <MdxRenderer content={summary} /> : <p>Loading...</p>}
+                    {summary && !isLoadingSummary && !isErrorSummary && (
+                        <MdxRenderer content={summary} />
+                    )}
+                    {isLoadingSummary && 
+                        <div className="flex justify-center">
+                            <div className="animate-spin rounded-full h-8 w-8 border-t-2 border-b-2 border-blue-500"></div>
+                        </div>
+                    }
                 </div>
             </div>
-            <div className="w-1/2 flex flex-col p-4 bg-gray-100">
+            <div className="max-w-full min-w-full relative md:min-w-[200px] flex flex-col p-4 bg-gray-100 " style={{ width: `${chatWidth}px` }} ref={chatRef}>
+                <div className="display-none md:block absolute left-0 top-0 bottom-0 w-2 cursor-col-resize" ref={resizerRef} onMouseDown={handleMouseDown}></div>
                 <h2 className="text-xl font-bold mb-4">Chat</h2>
-                <div className="flex-1 bg-white p-4 rounded shadow-md mb-4 overflow-y-auto">
+                <div className="flex-1 bg-white p-4 rounded shadow-md mb-4 overflow-y-auto max-h-96 md:max-h-full">
                     {qna.map((q, index) => (
                         <div key={index} className="mb-4">
                             <p><strong>Q:</strong> {q.question}</p>
@@ -186,40 +206,6 @@ const Summarize = ({ paperId }: { paperId: string }) => {
                     )}
                 </div>
             </div>
-
-            {isModalOpen && (
-                <div className="fixed inset-0 bg-gray-900 bg-opacity-50 flex items-center justify-center">
-                    <div className="bg-white p-6 rounded shadow-md">
-                        <h2 className="text-xl font-bold mb-4">Create Profile</h2>
-                        <input
-                            type="text"
-                            value={newProfileName}
-                            onChange={(e) => setNewProfileName(e.target.value)}
-                            placeholder="Profile Name"
-                            className="w-full p-2 border rounded mb-4"
-                        />
-                        <input
-                            type="text"
-                            value={newProfileLevel}
-                            onChange={(e) => setNewProfileLevel(e.target.value)}
-                            placeholder="Profile Level"
-                            className="w-full p-2 border rounded mb-4"
-                        />
-                        {/* <button
-                            onClick={createProfile}
-                            className="w-full bg-purple-500 text-white p-2 rounded"
-                        >
-                            Create Profile
-                        </button> */}
-                        <button
-                            onClick={() => setIsModalOpen(false)}
-                            className="w-full bg-gray-500 text-white p-2 rounded mt-2"
-                        >
-                            Cancel
-                        </button>
-                    </div>
-                </div>
-            )}
         </div>
     );
 };

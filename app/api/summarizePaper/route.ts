@@ -35,7 +35,6 @@ export async function POST(request: Request) {
     // console.log('summaryResponse:', JSON.stringify(summaryResponse?.data?.outputs, null, 2));
 
     return NextResponse.json({ summary: summaryResponse?.data?.outputs[0].paper_summarized?.[0] });
-    return NextResponse.json({});
   } catch (error: any) {
     return NextResponse.json({ error: error?.message }, { status: 500 });
   }

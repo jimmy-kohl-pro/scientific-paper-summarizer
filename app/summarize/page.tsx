@@ -9,9 +9,5 @@ export default function Page({
 }) {
   const id = searchParams.id;
 
-  return (
-    <div>
-      <Summarize paperId={id as string} />
-    </div>
-  );
+  return <Summarize paperId={id as string} />;
 }

@@ -23,7 +23,9 @@ const MdxRenderer = ({ content }: MdxRendererProps) => {
 
   return (
     <MDXProvider>
-      <MDXRemote {...mdxContent} />
+      <article className="prose min-w-full">
+        <MDXRemote {...mdxContent} />
+      </article>
     </MDXProvider>
   );
 };
