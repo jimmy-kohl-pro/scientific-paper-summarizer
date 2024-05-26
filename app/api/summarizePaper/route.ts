@@ -1,26 +1,26 @@
 import { NextResponse } from 'next/server';
 import { runPipeline } from '@/utils/instillApi';
+import { getFullTextById } from '@/utils/springerApi';
 
 export async function POST(request: Request) {
-  const { paper, profile } = await request.json();
+  const { paperId, profile } = await request.json();
 
-  console.log('paper:', {paper: JSON.stringify({
-    text: paper.text,
-    title: paper.title
-    // profile: profile
-})});
   try {
+    const paperText = await getFullTextById(paperId);
+
     const summaryResponse = await runPipeline(
       'summarization',
       [
         {
-            paper
+            paper: paperText,
+            profile: profile
         }
       ]
     ).catch((error) => {
         console.error('Error summarizing paper:', error.config.data, error.response.data);
     });
-    console.log('summaryResponse:', summaryResponse?.data?.outputs?.[0].summaryResponse?.[0]?.paper_summarized?.[0]);
+    // console.log('summaryResponse:', summaryResponse?.data?.outputs?.[0].summaryResponse?.[0]?.paper_summarized?.[0]);
+
     // const qnaResponse = await client.Pipeline.triggerUserPipelineAction({
     //   pipelineName: 'qna',
     //   payload: {
@@ -32,10 +32,13 @@ export async function POST(request: Request) {
     //     }
     // });
 
-    console.log('summaryResponse:', JSON.stringify(summaryResponse?.data?.outputs, null, 2));
+    // console.log('summaryResponse:', JSON.stringify(summaryResponse?.data?.outputs, null, 2));
 
     return NextResponse.json({ summary: summaryResponse?.data?.outputs[0].paper_summarized?.[0] });
+    return NextResponse.json({});
   } catch (error: any) {
     return NextResponse.json({ error: error?.message }, { status: 500 });
   }
 }
+
+

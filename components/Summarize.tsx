@@ -2,12 +2,15 @@
 
 import { useState, useEffect } from 'react';
 import axios from 'axios';
-import { FaUserAstronaut, FaLaptopCode, FaUser, FaPlus, FaPaperPlane } from 'react-icons/fa';
+import { FaUserAstronaut, FaLaptopCode, FaUser, FaPlus, FaPaperPlane, FaChild } from 'react-icons/fa';
+import MdxRenderer from './MdxRenderer';
+import { IconType } from 'react-icons';
 
 interface Profile {
-    id: number;
-    name: string;
-    level: string;
+    key: string;
+    label: string;
+    text: string;
+    icon?: IconType;
 }
 
 interface QnA {
@@ -15,61 +18,83 @@ interface QnA {
     answer: string;
 }
 
+const defaultProfiles: Profile[] = [
+    {
+        label: 'Casual Reader',
+        key: 'casual',
+        icon: FaUser,
+        text: 'Casual reader profile. Summarize the following scientific paper in a way that makes it easy to understand for everyone, regardless of their scientific background. Break down complex concepts into simple terms, and highlight the main findings and their significance.'
+    },
+    {
+        label: 'Scientist',
+        key: 'scientist',
+        icon: FaUserAstronaut,
+        text: 'Scientist profile. Summarize the following scientific paper while retaining all technical details, methodologies, and specific findings. Ensure the summary is precise, includes relevant data, and uses scientific terminology appropriate for a professional audience.'
+    },
+    {
+        label: 'Tech Enthusiast',
+        key: 'tech',
+        icon: FaLaptopCode,
+        text: 'Tech enthusiast profile. Summarize the following scientific paper with an emphasis on the technological aspects, methodologies, and data analysis techniques used. Highlight any innovative approaches or tools involved in the research.'
+    },
+    {
+        label: 'Child',
+        key: 'child',
+        icon: FaChild,
+        text: 'Child profile. Summarize the following scientific paper in a fun and simple way that a child can understand. Use easy words and relatable examples to explain the main points and findings.'
+    }
+];
+
 const Summarize = ({ paperId }: { paperId: string }) => {
-    const paperText = "This study examines the effects of climate change on marine biodiversity over the past 50 years. Our findings indicate significant shifts in species distribution and ecosystem dynamics, driven by changing ocean temperatures and acidification. Climate change is one of the most pressing environmental issues of our time. It affects various natural systems, including marine ecosystems. This paper explores how rising temperatures and ocean acidification have altered marine biodiversity, focusing on specific case studies and global trends. Our primary research question is: How has marine biodiversity responded to climate change over the past half-century? We employed a combination of longitudinal data analysis, field experiments, and computer modeling to study changes in marine biodiversity. Data were collected from multiple sources, including historical records, satellite imagery, and in situ observations. Statistical methods were used to identify significant trends and correlations. Our findings indicate several significant impacts of climate change on marine biodiversity: (1) Species Distribution Shifts: Many marine species have migrated towards the poles in response to rising ocean temperatures, resulting in altered community structures in various marine ecosystems. (2) Ecosystem Dynamics Changes: Changes in the abundance of keystone species have disrupted predator-prey relationships, leading to new ecological equilibria. (3) Acidification Effects: Increased ocean acidification has adversely affected calcifying organisms, such as corals and shellfish, leading to declines in their populations. Our results highlight the profound impact of climate change on marine biodiversity. The poleward migration of species and changes in ecosystem dynamics pose challenges for conservation and management efforts. Future research should focus on developing adaptive strategies to mitigate these impacts. Limitations of our study include potential biases in historical data and the need for more comprehensive global monitoring systems. Climate change has significantly affected marine biodiversity, with far-reaching consequences for ecosystem health and human livelihoods. Immediate action is required to address these challenges and protect marine life."; // Replace with actual data
     const [profile, setProfile] = useState<string>('casual');
     const [summary, setSummary] = useState<string>('');
     const [qna, setQna] = useState<QnA[]>([]);
     const [question, setQuestion] = useState<string>('');
     const [answer, setAnswer] = useState<string>('');
-    const [profiles, setProfiles] = useState<Profile[]>([]);
+    const [profiles, setProfiles] = useState<Profile[]>(defaultProfiles);
     const [newProfileName, setNewProfileName] = useState<string>('');
     const [newProfileLevel, setNewProfileLevel] = useState<string>('');
     const [isModalOpen, setIsModalOpen] = useState<boolean>(false);
 
-    const defaultProfiles: Profile[] = [
-        { id: 1, name: 'Casual', level: 'casual' },
-        { id: 2, name: 'Scientist', level: 'scientist' },
-        { id: 3, name: 'Tech', level: 'tech' },
-    ];
 
     useEffect(() => {
-        const savedProfiles = JSON.parse(localStorage.getItem('profiles') || '[]');
-        setProfiles([...defaultProfiles, ...savedProfiles]);
-        fetchProfiles();
+        // const savedProfiles = JSON.parse(localStorage.getItem('profiles') || '[]');
+        // setProfiles([...defaultProfiles, ...savedProfiles]);
+        // fetchProfiles();
+        fetchPaper();
     }, []);
 
     useEffect(() => {
         summarizePaper();
     }, [profile]);
 
-    const fetchProfiles = async () => {
-        try {
-            const response = await axios.get('/api/userProfiles');
-            setProfiles(response.data);
-        } catch (error) {
-            console.error('Error fetching profiles:', error);
-        }
-    };
 
-    const createProfile = () => {
-        const newProfile = { id: Date.now(), name: newProfileName, level: newProfileLevel };
-        const updatedProfiles = [...profiles, newProfile];
-        setProfiles(updatedProfiles);
-        localStorage.setItem('profiles', JSON.stringify(updatedProfiles));
-        setNewProfileName('');
-        setNewProfileLevel('');
-        setIsModalOpen(false);
-    };
+    const fetchPaper = async () => {
+        try {
+            const response = await axios.get(`/api/fetchPaper?paperId=${encodeURIComponent(paperId)}`);
+            console.log('response:', response.data);
+            // setPaper(response.data);
+        } catch (error) {
+            console.error('Error fetching paper:', error);
+        }
+    }
+    
+
+    // const createProfile = () => {
+    //     const newProfile = { id: Date.now(), name: newProfileName, level: newProfileLevel };
+    //     const updatedProfiles = [...profiles, newProfile];
+    //     setProfiles(updatedProfiles);
+    //     localStorage.setItem('profiles', JSON.stringify(updatedProfiles));
+    //     setNewProfileName('');
+    //     setNewProfileLevel('');
+    //     setIsModalOpen(false);
+    // };
 
     const summarizePaper = async () => {
         try {
             const response = await axios.post('/api/summarizePaper', {
-                paper: {
-                    title: 'The Impact of Climate Change on Marine Biodiversity',
-                    text: paperText,
-                },
-                profile
+                paperId,
+                profile: profiles.find((p) => p.key === profile)?.text
             });
             console.log('response:', response.data);
             setSummary(response.data.summary);
@@ -79,17 +104,17 @@ const Summarize = ({ paperId }: { paperId: string }) => {
         }
     };
 
-    const askQuestion = async () => {
-        try {
-            const response = await axios.post('/api/askQuestion', { paperText, question });
-            setAnswer(response.data.answer);
-        } catch (error) {
-            console.error('Error asking question:', error);
-        }
-    };
+    // const askQuestion = async () => {
+    //     try {
+    //         const response = await axios.post('/api/askQuestion', { paperText, question });
+    //         setAnswer(response.data.answer);
+    //     } catch (error) {
+    //         console.error('Error asking question:', error);
+    //     }
+    // };
 
     return (
-        <div className="min-h-screen flex">
+        <div className="min-h-screen max-h-screen flex">
             <div className="w-1/2 p-4 bg-gray-200">
                 <div className="w-full flex flex-row gap-4 mt-4">
                     <div className="w-1/2">
@@ -97,23 +122,21 @@ const Summarize = ({ paperId }: { paperId: string }) => {
                         <div className="flex flex-col items-start space-y-2">
                             {profiles.map((p) => (
                                 <button
-                                    key={p.id}
-                                    className={`flex items-center space-x-2 p-2 w-full text-left rounded ${profile === p.level ? 'bg-blue-500 text-white' : 'bg-white'}`}
-                                    onClick={() => setProfile(p.level)}
+                                    key={p.key}
+                                    className={`flex items-center space-x-2 p-2 w-full text-left rounded ${profile === p.key ? 'bg-blue-500 text-white' : 'bg-white'}`}
+                                    onClick={() => setProfile(p.key)}
                                 >
-                                    {p.level === 'scientist' && <FaUserAstronaut />}
-                                    {p.level === 'tech' && <FaLaptopCode />}
-                                    {p.level === 'casual' && <FaUser />}
-                                    <span>{p.name}</span>
+                                    {p.icon && <p.icon />}
+                                    <span>{p.label}</span>
                                 </button>
                             ))}
-                            <button
+                            {/* <button
                                 className="flex items-center space-x-2 p-2 w-full text-left rounded bg-green-500 text-white"
                                 onClick={() => setIsModalOpen(true)}
                             >
                                 <FaPlus />
                                 <span>Create Profile</span>
-                            </button>
+                            </button> */}
                         </div>
                     </div>
                     <div className="w-1/2">
@@ -122,13 +145,13 @@ const Summarize = ({ paperId }: { paperId: string }) => {
                             <h3 className="text-lg font-bold">Paper ID</h3>
                             <p>{paperId}</p>
                             <h3 className="text-lg font-bold mt-4">Profile</h3>
-                            <p>{profile}</p>
+                            <p>{profiles.find((p) => p.key === profile)?.label}</p>
                         </div>
                     </div>
                 </div>
                 <h2 className="text-xl font-bold mt-8 mb-4">Summary</h2>
-                <div className="bg-white p-4 rounded shadow-md">
-                    {summary ? <p>{summary}</p> : <p>Loading...</p>}
+                <div className="bg-white p-4 rounded shadow-md overflow-y-auto">
+                    {summary ? <MdxRenderer content={summary} /> : <p>Loading...</p>}
                 </div>
             </div>
             <div className="w-1/2 flex flex-col p-4 bg-gray-100">
@@ -150,8 +173,8 @@ const Summarize = ({ paperId }: { paperId: string }) => {
                         className="w-full p-2 border rounded"
                     />
                     <button
-                        onClick={askQuestion}
-                        className="w-full bg-green-500 text-white p-2 rounded w-16 flex items-center justify-center h-full"
+                        // onClick={askQuestion}
+                        className="bg-green-500 text-white p-2 rounded w-16 flex items-center justify-center h-full"
                     >
                         <FaPaperPlane width={32} height={32} />
                     </button>
@@ -182,12 +205,12 @@ const Summarize = ({ paperId }: { paperId: string }) => {
                             placeholder="Profile Level"
                             className="w-full p-2 border rounded mb-4"
                         />
-                        <button
+                        {/* <button
                             onClick={createProfile}
                             className="w-full bg-purple-500 text-white p-2 rounded"
                         >
                             Create Profile
-                        </button>
+                        </button> */}
                         <button
                             onClick={() => setIsModalOpen(false)}
                             className="w-full bg-gray-500 text-white p-2 rounded mt-2"
