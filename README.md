@@ -1,3 +1,9 @@
+Instill Cloud pipeline used:
+
+- https://instill.tech/jim-k/pipelines/article-generator 
+- https://instill.tech/jim-k/pipelines/summarization
+- https://instill.tech/jim-k/pipelines/qna
+
 This is a [Next.js](https://nextjs.org/) project bootstrapped with [`create-next-app`](https://github.com/vercel/next.js/tree/canary/packages/create-next-app).
 
 ## Getting Started
