@@ -1,3 +1,5 @@
+Live demo: https://scientific-paper-summarizer.apps.uraki.dev
+
 Instill Cloud pipeline used:
 
 - https://instill.tech/jim-k/pipelines/article-generator 
